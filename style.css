@@ -73,30 +73,6 @@ body {
   background: #3a66d6;
 }
 
-/* ---------- Filter buttons ---------- */
-.filters {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 16px;
-}
-
-.filters button {
-  flex: 1;
-  padding: 6px;
-  background: #f1f4f9;
-  border: 1px solid #e1e6ee;
-  border-radius: 6px;
-  font-size: 13px;
-  cursor: pointer;
-  color: #4a5568;
-}
-
-.filters button.active {
-  background: #4a7bf7;
-  color: #fff;
-  border-color: #4a7bf7;
-}
-
 /* ---------- Task list ---------- */
 .task-list {
   list-style: none;

@@ -1,129 +1,140 @@
-// ===== Simple To-Do List App built with plain HTML, CSS & JavaScript =====
+// ===== Simple To-Do List App - Plain JavaScript =====
+// This version is written using very basic JavaScript
+// (for loops, if statements, simple functions) so it's
+// easy to read and explain.
 
-// ---- Grab elements from the page ----
-const taskInput = document.getElementById("taskInput");
-const addBtn = document.getElementById("addBtn");
-const taskList = document.getElementById("taskList");
-const emptyMessage = document.getElementById("emptyMessage");
-const remainingCountEl = document.getElementById("remainingCount");
-const filterButtons = document.querySelectorAll(".filter-btn");
+// ---- Step 1: Grab the HTML elements we need ----
+var taskInput = document.getElementById("taskInput");
+var addBtn = document.getElementById("addBtn");
+var taskList = document.getElementById("taskList");
+var emptyMessage = document.getElementById("emptyMessage");
+var remainingCountEl = document.getElementById("remainingCount");
 
-// ---- App state ----
-// Load any previously saved tasks from localStorage (so tasks survive a refresh)
-let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
-let currentFilter = "all"; // "all" | "active" | "completed"
+// ---- Step 2: Our data ----
+// tasks is just a list (array) of objects.
+// Each task looks like: { text: "Buy milk", completed: false }
+var tasks = [];
 
-// ---- Save tasks to localStorage ----
-function saveTasks() {
-  localStorage.setItem("tasks", JSON.stringify(tasks));
-}
-
-// ---- Add a new task ----
+// ---- Step 3: Function to add a new task ----
 function addTask() {
-  const text = taskInput.value.trim();
-  if (text === "") return; // ignore empty input
+  var taskText = taskInput.value;
 
-  tasks.push({
-    id: Date.now(), // simple unique id
-    text: text,
-    completed: false,
-  });
+  // remove extra spaces from the start/end
+  taskText = taskText.trim();
 
+  // don't add empty tasks
+  if (taskText === "") {
+    return;
+  }
+
+  // create a new task object
+  var newTask = {
+    text: taskText,
+    completed: false
+  };
+
+  // add it to our list
+  tasks.push(newTask);
+
+  // clear the input box
   taskInput.value = "";
-  saveTasks();
-  render();
+
+  // update the screen
+  showTasks();
 }
 
-// ---- Toggle a task between done / not done ----
-function toggleTask(id) {
-  tasks = tasks.map((task) =>
-    task.id === id ? { ...task, completed: !task.completed } : task
-  );
-  saveTasks();
-  render();
+// ---- Step 4: Function to mark a task done/not done ----
+function toggleTask(taskIndex) {
+  if (tasks[taskIndex].completed === true) {
+    tasks[taskIndex].completed = false;
+  } else {
+    tasks[taskIndex].completed = true;
+  }
+  showTasks();
 }
 
-// ---- Delete a task ----
-function deleteTask(id) {
-  tasks = tasks.filter((task) => task.id !== id);
-  saveTasks();
-  render();
+// ---- Step 5: Function to delete a task ----
+function deleteTask(taskIndex) {
+  tasks.splice(taskIndex, 1); // remove 1 item at that position
+  showTasks();
 }
 
-// ---- Change the active filter ----
-function setFilter(filter) {
-  currentFilter = filter;
-
-  filterButtons.forEach((btn) => {
-    btn.classList.toggle("active", btn.dataset.filter === filter);
-  });
-
-  render();
-}
-
-// ---- Build the visible task list based on the current filter ----
-function getVisibleTasks() {
-  if (currentFilter === "active") return tasks.filter((t) => !t.completed);
-  if (currentFilter === "completed") return tasks.filter((t) => t.completed);
-  return tasks; // "all"
-}
-
-// ---- Render everything to the page ----
-function render() {
-  const visibleTasks = getVisibleTasks();
-
-  // Clear current list
+// ---- Step 6: Function that draws everything on the screen ----
+function showTasks() {
+  // clear the current list on screen
   taskList.innerHTML = "";
 
-  // Show/hide empty message
-  emptyMessage.style.display = visibleTasks.length === 0 ? "block" : "none";
+  var howManyLeft = 0;
 
-  // Build each task row
-  visibleTasks.forEach((task) => {
-    const li = document.createElement("li");
+  // go through every task one by one
+  for (var i = 0; i < tasks.length; i++) {
+    var task = tasks[i];
+
+    // count how many tasks are still not completed
+    if (task.completed === false) {
+      howManyLeft = howManyLeft + 1;
+    }
+
+    // build one task row (li element)
+    var li = document.createElement("li");
     li.className = "task-item";
 
-    li.innerHTML = `
-      <input type="checkbox" ${task.completed ? "checked" : ""} />
-      <span class="task-text ${task.completed ? "completed" : ""}">${escapeHTML(task.text)}</span>
-      <button class="delete-btn">Delete</button>
-    `;
+    // checkbox
+    var checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.checked = task.completed;
+    checkbox.setAttribute("data-index", i);
+    checkbox.onclick = function () {
+      var index = this.getAttribute("data-index");
+      toggleTask(Number(index));
+    };
 
-    // Checkbox toggles completion
-    li.querySelector("input[type='checkbox']").addEventListener("change", () => {
-      toggleTask(task.id);
-    });
+    // task text
+    var span = document.createElement("span");
+    span.className = "task-text";
+    if (task.completed === true) {
+      span.className = "task-text completed";
+    }
+    span.textContent = task.text;
 
-    // Delete button removes the task
-    li.querySelector(".delete-btn").addEventListener("click", () => {
-      deleteTask(task.id);
-    });
+    // delete button
+    var delBtn = document.createElement("button");
+    delBtn.className = "delete-btn";
+    delBtn.textContent = "Delete";
+    delBtn.setAttribute("data-index", i);
+    delBtn.onclick = function () {
+      var index = this.getAttribute("data-index");
+      deleteTask(Number(index));
+    };
 
+    // put it all together
+    li.appendChild(checkbox);
+    li.appendChild(span);
+    li.appendChild(delBtn);
     taskList.appendChild(li);
-  });
+  }
 
-  // Update remaining task count
-  const remaining = tasks.filter((t) => !t.completed).length;
-  remainingCountEl.textContent = remaining;
+  // show or hide the "no tasks" message
+  if (tasks.length === 0) {
+    emptyMessage.style.display = "block";
+  } else {
+    emptyMessage.style.display = "none";
+  }
+
+  // update the "tasks remaining" counter
+  remainingCountEl.textContent = howManyLeft;
 }
 
-// ---- Small helper to avoid breaking HTML if a task contains special characters ----
-function escapeHTML(str) {
-  const div = document.createElement("div");
-  div.textContent = str;
-  return div.innerHTML;
-}
+// ---- Step 7: Connect button and key press to our functions ----
+addBtn.onclick = function () {
+  addTask();
+};
 
-// ---- Event listeners ----
-addBtn.addEventListener("click", addTask);
+taskInput.onkeydown = function (event) {
+  if (event.key === "Enter") {
+    addTask();
+  }
+};
 
-taskInput.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") addTask();
-});
-
-filterButtons.forEach((btn) => {
-  btn.addEventListener("click", () => setFilter(btn.dataset.filter));
-});
-
-// ---- Initial render on page load ----
-render();
+// ---- Step 8: Show the (empty) list when the page first loads ----
+showTasks();
